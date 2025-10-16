@@ -9,17 +9,14 @@ import {
   Alert,
   Switch,
   Platform,
-  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
 
 // Import do nosso sistema de storage
 import { addHabit } from "../utils/storage";
 
 const AddHabitScreen = ({ navigation }) => {
   const [habitName, setHabitName] = useState("");
-  const [habitImage, setHabitImage] = useState(null);
   const [frequency, setFrequency] = useState("daily");
   const [timesPerWeek, setTimesPerWeek] = useState("3");
   const [targetDays, setTargetDays] = useState("5");
@@ -88,29 +85,6 @@ const AddHabitScreen = ({ navigation }) => {
   };
 
   // Salvar novo hábito
-  // Lidar com a seleção de imagem
-  const handleChoosePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permissão necessária",
-        "É necessário permitir o acesso à câmera para adicionar uma foto."
-      );
-      return;
-    }
-
-    let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.5,
-    });
-
-    if (!result.canceled) {
-      setHabitImage(result.assets[0].uri);
-    }
-  };
-
-  // Salvar novo hábito
   const handleSaveHabit = async () => {
     if (!validateForm()) return;
 
@@ -119,7 +93,6 @@ const AddHabitScreen = ({ navigation }) => {
     try {
       const newHabit = {
         name: habitName.trim(),
-        image: habitImage,
         frequency: frequency,
         timesPerWeek: frequency === "weekly" ? parseInt(timesPerWeek) : 7,
         targetDays: parseInt(targetDays),
@@ -163,24 +136,6 @@ const AddHabitScreen = ({ navigation }) => {
           autoFocus
         />
         <Text style={styles.charCount}>{habitName.length}/50</Text>
-      </View>
-
-      {/* Imagem do Hábito */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Imagem do Hábito</Text>
-        <TouchableOpacity
-          style={styles.imagePicker}
-          onPress={handleChoosePhoto}
-        >
-          {habitImage ? (
-            <Image source={{ uri: habitImage }} style={styles.habitImage} />
-          ) : (
-            <View style={styles.imagePickerPlaceholder}>
-              <Ionicons name="camera" size={32} color="#666" />
-              <Text style={styles.imagePickerText}>Adicionar Foto</Text>
-            </View>
-          )}
-        </TouchableOpacity>
       </View>
 
       {/* Frequência */}
@@ -569,28 +524,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#fff",
-  },
-  imagePicker: {
-    height: 150,
-    borderRadius: 8,
-    backgroundColor: "#fafafa",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginTop: 8,
-  },
-  imagePickerPlaceholder: {
-    alignItems: "center",
-  },
-  imagePickerText: {
-    marginTop: 8,
-    color: "#666",
-  },
-  habitImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 8,
   },
 });
 

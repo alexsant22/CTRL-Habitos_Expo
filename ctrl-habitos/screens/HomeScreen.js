@@ -11,6 +11,7 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 
 // Import do nosso sistema de storage
 import {
@@ -57,19 +58,78 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  // Tirar uma foto
+  const handleTakePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permissão necessária",
+        "É necessário permitir o acesso à câmera para adicionar uma foto."
+      );
+      return null;
+    }
+
+    let result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      return result.assets[0].uri;
+    }
+    return null;
+  };
+
   // Marcar hábito como concluído/não concluído
   const toggleHabitCompletion = async (habitId) => {
+    const currentStatus = todayStatus[habitId] || {};
+    const newStatus = !currentStatus.completed;
+
     try {
-      const currentStatus = todayStatus[habitId]?.completed || false;
-      const newStatus = !currentStatus;
-
-      await markHabitForToday(habitId, newStatus);
-
-      // Atualizar estado local
-      setTodayStatus((prev) => ({
-        ...prev,
-        [habitId]: { ...prev[habitId], completed: newStatus },
-      }));
+      if (newStatus) {
+        // Marcando como concluído
+        Alert.alert(
+          "Concluir Hábito",
+          "Deseja adicionar uma foto para registrar este momento?",
+          [
+            {
+              text: "Só concluir",
+              onPress: async () => {
+                await markHabitForToday(habitId, true, null);
+                setTodayStatus((prev) => ({
+                  ...prev,
+                  [habitId]: { completed: true, photo: null },
+                }));
+              },
+              style: "default",
+            },
+            {
+              text: "Adicionar Foto",
+              onPress: async () => {
+                const photoUri = await handleTakePhoto();
+                await markHabitForToday(habitId, true, photoUri);
+                setTodayStatus((prev) => ({
+                  ...prev,
+                  [habitId]: { completed: true, photo: photoUri },
+                }));
+              },
+              style: "default",
+            },
+            {
+              text: "Cancelar",
+              style: "cancel",
+            },
+          ]
+        );
+      } else {
+        // Desmarcando o hábito
+        await markHabitForToday(habitId, false, null);
+        setTodayStatus((prev) => ({
+          ...prev,
+          [habitId]: { completed: false, photo: null },
+        }));
+      }
     } catch (error) {
       console.error("Erro ao marcar hábito:", error);
       Alert.alert("Erro", "Não foi possível atualizar o hábito");
@@ -122,12 +182,14 @@ const HomeScreen = ({ navigation }) => {
 
   // Renderizar cada item da lista de hábitos
   const renderHabitItem = ({ item: habit }) => {
-    const isCompleted = todayStatus[habit.id]?.completed || false;
+    const status = todayStatus[habit.id] || {};
+    const isCompleted = status.completed;
+    const photoUri = status.photo;
 
     return (
       <View style={[styles.habitCard, isCompleted && styles.completedHabit]}>
-        {habit.image && (
-          <Image source={{ uri: habit.image }} style={styles.habitImage} />
+        {photoUri && (
+          <Image source={{ uri: photoUri }} style={styles.habitImage} />
         )}
         <TouchableOpacity
           style={styles.habitContent}
