@@ -8,6 +8,7 @@ import {
   Alert,
   ScrollView,
   RefreshControl,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -125,6 +126,9 @@ const HomeScreen = ({ navigation }) => {
 
     return (
       <View style={[styles.habitCard, isCompleted && styles.completedHabit]}>
+        {habit.image && (
+          <Image source={{ uri: habit.image }} style={styles.habitImage} />
+        )}
         <TouchableOpacity
           style={styles.habitContent}
           onPress={() => toggleHabitCompletion(habit.id)}
@@ -475,6 +479,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+  },
+  habitImage: {
+    width: "100%",
+    height: 150,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
 });
 
